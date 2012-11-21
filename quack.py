@@ -9,24 +9,33 @@ from sqlalchemy.orm.query import Query
 
 
 def overridable(func):
-    """Make a method into an overridable mock.
+    """Decorator used to create overridable methods.
     
-    Methods using this decorator are made into mock attributes that call the
-    method unless return_value or side_effect are overridden.
+    Creates a property that returns a MagicMock. When called, the mock
+    returns either the result of calling the decorated method or
+    mock.return_value if it was overridden.
     """
-    attr = mock.MagicMock()
+    instances = {}
 
     @property
     def prop(self):
-        def wrapper(*args, **kwargs):
-            if attr._mock_return_value is mock.DEFAULT:
-                return func(self, *args, **kwargs)
-            else:
-                return mock.DEFAULT
+        """Property that associates mocks with instances."""
+        try:
+            return instances[self]
+        except KeyError:
+            attr = mock.MagicMock()
 
-        attr.side_effect = wrapper
+            def wrapper(*args, **kwargs):
+                """Either call the decorated method or return reuturn_value."""
+                if attr._mock_return_value is mock.DEFAULT:
+                    return func(self, *args, **kwargs)
+                else:
+                    return mock.DEFAULT
 
-        return attr
+            attr.side_effect = wrapper
+            instances[self] = attr
+
+            return attr
 
     return prop
 

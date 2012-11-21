@@ -78,19 +78,6 @@ class TestMockQuery(unittest.TestCase):
 
         self.assertIs(query._mock_model_class, 'test')
 
-    def test_all(self):
-        """Test calling query.all()."""
-        class TestClass(object):
-            pass
-
-        query = quack.MockQuery(TestClass)
-
-        items = query.all()
-
-        self.assertGreater(len(items), 0)
-        for item in items:
-            self.assertIsInstance(item, TestClass)
-
     def test_all_no_model_class(self):
         """Test calling query.all with no model class."""
         query = quack.MockQuery()
@@ -108,15 +95,35 @@ class TestMockQuery(unittest.TestCase):
         self.assertIs(query.all(), 'fart')
 
 
+class TestClass(object):
+    """A dummy class."""
+
+
+class TestQueryEndpoints(unittest.TestCase):
+    """Tests for query endpoint methods."""
+    def setUp(self):
+        self.query = quack.MockQuery(TestClass)
+
+    def test_all(self):
+        """Test calling query.all."""
+        items = self.query.all()
+
+        self.assertGreater(len(items), 0)
+        for item in items:
+            self.assertIsInstance(item, TestClass)
+
+
+class Overridden(mock.MagicMock):
+    """A class with an overridable method."""
+    @quack.overridable
+    def test(self):
+        return 'test'
+
+
 class TestOverridable(unittest.TestCase):
     def test_override(self):
         """Test overriding an overridable property."""
-        class Test(mock.MagicMock):
-            @quack.overridable
-            def test(self):
-                return 'test'
-
-        instance = Test()
+        instance = Overridden()
 
         self.assertIsInstance(instance.test, mock.Mock)
         self.assertIs(instance.test(), 'test')
@@ -124,3 +131,10 @@ class TestOverridable(unittest.TestCase):
         instance.test.return_value = 'fart'
 
         self.assertIs(instance.test(), 'fart')
+
+    def test_multiple_instances(self):
+        """Test getting new overridable method mocks for every instance."""
+        first = Overridden()
+        second = Overridden()
+
+        self.assertIsNot(first.test, second.test)
