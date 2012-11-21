@@ -71,3 +71,21 @@ class TestMockQuery(unittest.TestCase):
         query.one.return_value = 'test'
 
         self.assertIs(query.one(), 'test')
+
+
+class TestOverridable(unittest.TestCase):
+    def test_override(self):
+        """Test overriding an overridable property."""
+        class Test(mock.MagicMock):
+            @quack.overridable
+            def test(self):
+                return 'test'
+
+        instance = Test()
+
+        self.assertIsInstance(instance.test, mock.Mock)
+        self.assertIs(instance.test(), 'test')
+
+        instance.test.return_value = 'fart'
+
+        self.assertIs(instance.test(), 'fart')

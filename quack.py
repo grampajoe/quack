@@ -8,6 +8,29 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.query import Query
 
 
+def overridable(func):
+    """Make a method into an overridable mock.
+    
+    Methods using this decorator are made into mock attributes that call the
+    method unless return_value or side_effect are overridden.
+    """
+    attr = mock.MagicMock()
+
+    @property
+    def prop(self):
+        def wrapper(*args, **kwargs):
+            if attr._mock_return_value is mock.DEFAULT:
+                return func(self, *args, **kwargs)
+            else:
+                return mock.DEFAULT
+
+        attr.side_effect = wrapper
+
+        return attr
+
+    return prop
+
+
 class MockSession(mock.MagicMock):
     """A mock SQLAlchemy session.
 
@@ -20,17 +43,12 @@ class MockSession(mock.MagicMock):
         """Use Session as the default spec."""
         super(MockSession, self).__init__(spec=spec, *args, **kwargs)
 
-        def _query(*args, **kwargs):
-            """Return a MockQuery only if query's return value is not set."""
-            if self.query._mock_return_value is mock.DEFAULT:
-                query = MockQuery()
-                self._mock_queries.append(query)
+    @overridable
+    def query(self):
+        query = MockQuery()
+        self._mock_queries.append(query)
 
-                return query
-            else:
-                return self.query.return_value
-
-        self.query.side_effect = _query
+        return query
 
     @property
     def mock_queries(self):
