@@ -72,6 +72,41 @@ class TestMockQuery(unittest.TestCase):
 
         self.assertIs(query.one(), 'test')
 
+    def test_model_class(self):
+        """Test setting the model class."""
+        query = quack.MockQuery('test')
+
+        self.assertIs(query._mock_model_class, 'test')
+
+    def test_all(self):
+        """Test calling query.all()."""
+        class TestClass(object):
+            pass
+
+        query = quack.MockQuery(TestClass)
+
+        items = query.all()
+
+        self.assertGreater(len(items), 0)
+        for item in items:
+            self.assertIsInstance(item, TestClass)
+
+    def test_all_no_model_class(self):
+        """Test calling query.all with no model class."""
+        query = quack.MockQuery()
+
+        items = query.all()
+
+        self.assertIs(items, query.all.return_value)
+
+    def test_all_override(self):
+        """Test overriding all."""
+        query = quack.MockQuery()
+
+        query.all.return_value = 'fart'
+
+        self.assertIs(query.all(), 'fart')
+
 
 class TestOverridable(unittest.TestCase):
     def test_override(self):

@@ -60,9 +60,11 @@ class MockQuery(mock.MagicMock):
 
     All methods return the query to allow chaining.
     """
-    def __init__(self, spec=Query, *args, **kwargs):
+    def __init__(self, model_class=None, spec=Query, *args, **kwargs):
         """Use Query as the default spec."""
         super(MockQuery, self).__init__(spec=spec, *args, **kwargs)
+
+        self._mock_model_class = model_class
 
     def __getattr__(self, name):
         """Get attributes that return self when called.
@@ -75,3 +77,11 @@ class MockQuery(mock.MagicMock):
             attr.return_value = self
 
         return attr
+
+    @overridable
+    def all(self):
+        if not self._mock_model_class:
+            return self.all.return_value
+
+        return [mock.MagicMock(spec=self._mock_model_class)
+                for i in range(10)]
