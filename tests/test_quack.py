@@ -6,6 +6,7 @@ import mock
 import quack
 from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.query import Query
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 
 class TestMockSession(unittest.TestCase):
@@ -68,9 +69,9 @@ class TestMockQuery(unittest.TestCase):
         """Test setting the return value of a query method."""
         query = quack.MockQuery()
 
-        query.one.return_value = 'test'
+        query.filter_by.return_value = 'test'
 
-        self.assertIs(query.one(), 'test')
+        self.assertIs(query.filter_by(), 'test')
 
     def test_model_class(self):
         """Test setting the model class."""
@@ -78,21 +79,16 @@ class TestMockQuery(unittest.TestCase):
 
         self.assertIs(query._mock_model_class, 'test')
 
-    def test_all_no_model_class(self):
-        """Test calling query.all with no model class."""
-        query = quack.MockQuery()
+    def test_model_class_from_attribute(self):
+        """Test passing an attribute and getting the model class."""
+        class TestModel(object):
+            test = mock.Mock(spec=InstrumentedAttribute)
 
-        items = query.all()
+        TestModel.test.class_ = TestModel
 
-        self.assertIs(items, query.all.return_value)
+        query = quack.MockQuery(TestModel.test)
 
-    def test_all_override(self):
-        """Test overriding all."""
-        query = quack.MockQuery()
-
-        query.all.return_value = 'fart'
-
-        self.assertIs(query.all(), 'fart')
+        self.assertIs(query._mock_model_class, TestModel)
 
 
 class TestClass(object):
@@ -111,6 +107,85 @@ class TestQueryEndpoints(unittest.TestCase):
         self.assertGreater(len(items), 0)
         for item in items:
             self.assertIsInstance(item, TestClass)
+
+    def test_all_no_model_class(self):
+        """Test calling query.all with no model class."""
+        query = quack.MockQuery()
+
+        items = query.all()
+
+        self.assertIs(items, query.all.return_value)
+
+    def test_all_override(self):
+        """Test overriding all."""
+        query = quack.MockQuery()
+
+        query.all.return_value = 'fart'
+
+        self.assertIs(query.all(), 'fart')
+
+    def test_first(self):
+        """Test returning the first result."""
+        item = self.query.first()
+
+        self.assertIsInstance(item, TestClass)
+
+    def test_first_no_model_class(self):
+        """Test first with no model class."""
+        query = quack.MockQuery()
+
+        self.assertIs(query.first(), query.first.return_value)
+
+    def test_first_override(self):
+        """Test overriding first."""
+        self.query.first.return_value = 'test'
+
+        self.assertIs(self.query.first(), 'test')
+
+    def test_get(self):
+        """Test get."""
+        item = self.query.get('test')
+
+        self.assertIsInstance(item, TestClass)
+
+    def test_get_override(self):
+        """Test overriding get."""
+        self.query.get.return_value = 'test'
+
+        self.assertIs(self.query.get(), 'test')
+
+    def test_get_no_model_class(self):
+        """Test get with no model class."""
+        query = quack.MockQuery()
+
+        self.assertIs(query.get('test'), query.get.return_value)
+
+    def test_one(self):
+        """Test one."""
+        item = self.query.one()
+
+        self.assertIsInstance(self.query.one(), TestClass)
+
+    def test_one_override(self):
+        """Test overriding one."""
+        self.query.one.return_value = 'test'
+
+        self.assertIs(self.query.one(), 'test')
+
+    def test_one_no_model_class(self):
+        """Test one with no model class."""
+        query = quack.MockQuery()
+
+        self.assertIs(query.one(), query.one.return_value)
+
+    def test_scalar(self):
+        """Test scalar."""
+
+    def test_value(self):
+        """Test value."""
+
+    def test_values(self):
+        """Test values."""
 
 
 class Overridden(mock.MagicMock):

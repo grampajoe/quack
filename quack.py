@@ -6,6 +6,7 @@ Mock and SQLAlchemy but not horrible.
 import mock
 from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.query import Query
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 
 def overridable(func):
@@ -73,6 +74,9 @@ class MockQuery(mock.MagicMock):
         """Use Query as the default spec."""
         super(MockQuery, self).__init__(spec=spec, *args, **kwargs)
 
+        if isinstance(model_class, InstrumentedAttribute):
+            model_class = model_class.class_
+
         self._mock_model_class = model_class
 
     def __getattr__(self, name):
@@ -89,8 +93,33 @@ class MockQuery(mock.MagicMock):
 
     @overridable
     def all(self):
+        """Get a list of all items."""
         if not self._mock_model_class:
             return self.all.return_value
 
         return [mock.MagicMock(spec=self._mock_model_class)
                 for i in range(10)]
+
+    @overridable
+    def first(self):
+        """Get the first item from a query result."""
+        if not self._mock_model_class:
+            return self.first.return_value
+
+        return mock.MagicMock(spec=self._mock_model_class)
+
+    @overridable
+    def get(self, pk):
+        """Get a single item by its primary key."""
+        if not self._mock_model_class:
+            return self.get.return_value
+
+        return mock.MagicMock(spec=self._mock_model_class)
+
+    @overridable
+    def one(self):
+        """Get a single item."""
+        if not self._mock_model_class:
+            return self.one.return_value
+
+        return mock.MagicMock(spec=self._mock_model_class)
