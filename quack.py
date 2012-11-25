@@ -46,16 +46,15 @@ class MockSession(mock.MagicMock):
 
     The query method returns a special mock Query.
     """
-    query = mock.MagicMock()
-    _mock_queries = []
-
     def __init__(self, spec=Session, *args, **kwargs):
         """Use Session as the default spec."""
         super(MockSession, self).__init__(spec=spec, *args, **kwargs)
 
+        self._mock_queries = []
+
     @overridable
-    def query(self):
-        query = MockQuery()
+    def query(self, *args):
+        query = MockQuery(entities=args)
         self._mock_queries.append(query)
 
         return query
@@ -70,14 +69,11 @@ class MockQuery(mock.MagicMock):
 
     All methods return the query to allow chaining.
     """
-    def __init__(self, model_class=None, spec=Query, *args, **kwargs):
+    def __init__(self, entities=None, spec=Query, *args, **kwargs):
         """Use Query as the default spec."""
         super(MockQuery, self).__init__(spec=spec, *args, **kwargs)
 
-        if isinstance(model_class, InstrumentedAttribute):
-            model_class = model_class.class_
-
-        self._mock_model_class = model_class
+        self._mock_entities = entities
 
     def __getattr__(self, name):
         """Get attributes that return self when called.
@@ -94,32 +90,32 @@ class MockQuery(mock.MagicMock):
     @overridable
     def all(self):
         """Get a list of all items."""
-        if not self._mock_model_class:
+        if not self._mock_entities:
             return self.all.return_value
 
-        return [mock.MagicMock(spec=self._mock_model_class)
+        return [mock.MagicMock(spec=self._mock_entities)
                 for i in range(10)]
 
     @overridable
     def first(self):
         """Get the first item from a query result."""
-        if not self._mock_model_class:
+        if not self._mock_entities:
             return self.first.return_value
 
-        return mock.MagicMock(spec=self._mock_model_class)
+        return mock.MagicMock(spec=self._mock_entities)
 
     @overridable
     def get(self, pk):
         """Get a single item by its primary key."""
-        if not self._mock_model_class:
+        if not self._mock_entities:
             return self.get.return_value
 
-        return mock.MagicMock(spec=self._mock_model_class)
+        return mock.MagicMock(spec=self._mock_entities)
 
     @overridable
     def one(self):
         """Get a single item."""
-        if not self._mock_model_class:
+        if not self._mock_entities:
             return self.one.return_value
 
-        return mock.MagicMock(spec=self._mock_model_class)
+        return mock.MagicMock(spec=self._mock_entities)

@@ -73,22 +73,12 @@ class TestMockQuery(unittest.TestCase):
 
         self.assertIs(query.filter_by(), 'test')
 
-    def test_model_class(self):
-        """Test setting the model class."""
-        query = quack.MockQuery('test')
+    def test_entities(self):
+        """Test setting the query entites."""
+        session = quack.MockSession()
+        query = session.query('test', 'another')
 
-        self.assertIs(query._mock_model_class, 'test')
-
-    def test_model_class_from_attribute(self):
-        """Test passing an attribute and getting the model class."""
-        class TestModel(object):
-            test = mock.Mock(spec=InstrumentedAttribute)
-
-        TestModel.test.class_ = TestModel
-
-        query = quack.MockQuery(TestModel.test)
-
-        self.assertIs(query._mock_model_class, TestModel)
+        self.assertSequenceEqual(query._mock_entities, ('test', 'another'))
 
 
 class TestClass(object):
