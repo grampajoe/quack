@@ -8,8 +8,4 @@ setup(
     author='Joe Friedl',
     author_email='joe@joefriedl.net',
     py_modules=['quack'],
-    install_requires=[
-        'SQLAlchemy==0.7.9',
-        'mock==1.0.1'
-    ]
 )

@@ -1,0 +1,2 @@
+SQLAlchemy==0.7.9
+mock==1.0.1
