@@ -1,2 +1,2 @@
-SQLAlchemy==0.7.9
+SQLAlchemy==1.2.18
 mock==1.0.1
